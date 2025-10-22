@@ -23,7 +23,3 @@ My passion lies at the intersection of research and production—taking cutting-
 - **Research to Practice**: Bridging the gap between academic papers and production code
 - **Multilingual NLP**: Working with systems that serve diverse international audiences
 
-
----
-
-## Recent Posts
