@@ -2,7 +2,7 @@
 layout: home
 ---
 
-<img src="https://media.licdn.com/dms/image/v2/C4D03AQF1fRIJYQX4eA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1584815989141?e=1762992000&v=beta&t=eukintRq7v1Y7IG8LzjijHEuHEtddcdHfWaoKT8YYrM" alt="Dr. Tae-Gil Noh" style="float: right; margin-left: 20px; margin-bottom: 10px; border-radius: 50%; width: 200px; height: 200px; object-fit: cover;">
+<img src="/assets/images/gil_profile_picture.jpg" alt="Dr. Tae-Gil Noh" style="float: right; margin-left: 20px; margin-bottom: 10px; border-radius: 50%; width: 200px; height: 200px; object-fit: cover;">
 
 # Dr. Tae-Gil Noh
 
