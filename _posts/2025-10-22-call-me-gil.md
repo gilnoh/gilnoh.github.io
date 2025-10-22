@@ -17,7 +17,7 @@ Although, being the head part of the phrase is probably not the main reason it's
 
 So it really depends on the language and its users—even between similarly "generated" names of East Asian languages.
 
-Various causes have been identified for cross-linguistic differences in nickname/hypocoristic formation, including phonological constraints, pragmatic functions, morphological productivity, and cultural attitude shifts.[^1] It seems that this remains an active area of linguistic research, and naturally there is no universal, easy method of name truncation that applies across all languages.
+Various causes have been identified for cross-linguistic differences in nickname/hypocoristic formation, including phonological constraints, pragmatic functions, morphological productivity, and cultural attitude shifts.[^1] It seems that this still remains an area of linguistic research, and naturally there is no universal, easy method of name truncation that applies across all languages.
 
 So this is the story of why it is Gil out of "Tae Gil Noh".
 
