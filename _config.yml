@@ -1,10 +1,20 @@
-title: Gil's Observations
+# title and email
+title: "Dr. Tae-Gil Noh | Gil's Observations"
 email: nohtaegil@gmail.com
+
+# description
 description: >-
-  Personal homepage of Dr. Tae-Gil Noh.
-  Machine Learning Engineer at OMQ GmbH, based in Berlin.
-  A blog about my observations around this evolving world.
+  Personal homepage of Dr. Tae-Gil Noh (Gil).
+  Machine Learning Engineer at OMQ GmbH.
+  Observations on NLP, AI, and this evolving world.
+
 url: "https://gilnoh.github.io"
 twitter_username: tailblues
 github_username: gilnoh
+
+# theme
 theme: minima
+
+# plugins
+plugins:
+  - jekyll-seo-tag
