@@ -1,5 +1,5 @@
 # title and email
-title: "Gil's Observations"
+title: "Dr. Tae-Gil Noh | Gil's Observations"
 email: nohtaegil@gmail.com
 
 # description
@@ -17,3 +17,4 @@ theme: minima
 # plugins
 plugins:
   - jekyll-seo-tag
+  - jekyll-sitemap
