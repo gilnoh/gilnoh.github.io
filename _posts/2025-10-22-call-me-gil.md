@@ -15,6 +15,8 @@ But in Korean, when you shorten a first name, the general trend is the opposite.
 
 Although, being the head part of the phrase is probably not the main reason it's selected in short forms. Japanese names and Chinese names are also composed mostly as noun phrases out of Chinese characters, but their "shortening" rules are different. For Japanese, first syllables are mostly selected for making diminutive or endearment forms. Misaki (美咲 - beautiful blooming) is called Mi-chan, and Daisuke (大輔 - great helper) is called Dai-chan. On the contrary, Chinese is closer to Korean nickname-making. They tend to prefer the second/last syllable and use it for pet names. You can call that syllable twice, such as Zhìqiáng (志强) becoming Qiángqiang (强强 - repetition of the second syllable). Or sometimes add an adjective to that syllable, such as Xiǎo Qiáng (小强 - adding a syllable with the meaning of "small"), or sometimes adding "Ā" (阿) as Ā Qiáng (阿强).
 
+![NL-Penguins checking prefix/postfix patterns in nickname formation](/assets/images/nl_penguins_on_names.png)
+
 So it really depends on the language and its users—even between similarly "generated" names of East Asian languages.
 
 Various causes have been identified for cross-linguistic differences in nickname/hypocoristic formation, including phonological constraints, pragmatic functions, morphological productivity, and cultural attitude shifts.[^1] It seems that this still remains an area of linguistic research, and naturally there is no universal, easy method of name truncation that applies across all languages.
@@ -22,6 +24,8 @@ Various causes have been identified for cross-linguistic differences in nickname
 So this is the story of why it is Gil out of "Tae Gil Noh".
 
 Hey there, nice to meet you. Please call me Gil.
+
+![Nice to meet you, Gil and Nanuk](/assets/images/call_me_gil.png)
 
 ---
 
