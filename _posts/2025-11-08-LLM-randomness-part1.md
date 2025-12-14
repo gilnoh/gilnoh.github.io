@@ -79,9 +79,9 @@ Let's revisit the weather examples from GPT-4.1 with temp=0. They are from diffe
 ### Reproducibility vs. Efficiency
 Now, you might be thinking: "Can't we just fix this?" And actually, yes — some providers now offer "reproducible" or "deterministic" modes, often with a "seed" parameter. In controlled settings like evaluation benchmarks, this works beautifully: same seed, same input, same output. Perfect for running the same evaluation suite multiple times and getting consistent scores.
 
-But here's the catch: truly reproducible modes often require fixed batch sizes (sometimes batch=1, processing one request at a time) or dedicated compute instances. This can reduce throughput by 10-100x depending on the system. Suddenly your API calls are slower and/or cost significantly more. So in practice, production systems run with dynamic batching: faster, cheaper, and accepting non-determinism at the single-inference level.
+But here's the catch: truly reproducible modes often require fixed batch sizes (sometimes batch=1, processing one request at a time) or dedicated compute instances. This can reduce throughput by 10-100x depending on the system. Suddenly your API calls are slower and/or cost significantly more. So in practice, production systems run with dynamic or continuous batching: faster, cheaper, and accepting non-determinism at the single-inference level.
 
-This is why we see non-deterministic LLM outputs from production endpoints - not just from some providers, but from virtually all of them. Unless you run a local instance with single-batch processing, or pay premium costs for dedicated compute, this is simply how production LLM systems work. The computational context your request lands in shapes the output you receive, and you have no control over it. This is the reality we live in.
+This is why we see non-deterministic LLM outputs from production endpoints - not just from some providers, but from virtually all of them. Unless you run a local instance with single-batch processing, or pay premium costs for dedicated compute, this is simply how production LLMs work. The computational context your request lands in shapes the output you receive, and you have no control over it. This is the reality we live in.
 
 ### Conclusion
 So let's return to our original question: "Does an LLM have fundamental randomness in it?" The answer, as I said at the beginning, is "No, but also Yes."
@@ -93,7 +93,7 @@ But Yes: In practice, production LLM systems can't run deterministically, even w
 ### ... and the Bigger Source of Unpredictability
 However, there is more to visit on "LLMs seem to be unpredictable". The bigger contribution comes from something else: **you cannot easily reason about how two different but seemingly similar inputs will behave**. This is what frustrates users and engineers in production. This is more than sampling variance, or MoE routing. This is emergent behavior from a complex system encountering edge cases in its learned generalizations. The model is trying to solve an inherently underspecified problem -- real-world inputs are always ambiguous in subtle ways -- and it does so by generalizing from the data it has observed before (training data). Sometimes that generalization is robust. Sometimes it's brittle. And predicting which is which? That's the hard part.
 
-Understanding this bigger source of unpredictability -- how LLMs generalize, where they fail, and what we can do about it -- is the goal of Part 2.
+Understanding this bigger source of unpredictability -- how LLMs generalize, where they fail, and what we can do about it -- is the goal of the next article (Part 2).
 
 ---
 
