@@ -69,6 +69,8 @@ So what's going on here? Why does temp=0 still give us different outputs? The an
 
 Think of it like this: imagine a committee of specialists answering your question, but they're simultaneously answering 50 other questions from different people. Your question about weather arrives in batch #4791 alongside queries about cooking recipes, tax law, and Python debugging: and is then handled by, say, expert #800 (literature analysis) and expert #500 (natural science). Run your exact same question again. It then lands in batch #4792 with astronomy questions, poetry analysis, and medical queries, and is then assigned to expert #400 (linguistic) and expert #300 (social science). Different "main writer" for your answer. The assigned experts are deemed capable enough to answer your question, but they are subtly different. The output you get is shaped not just by your prompt, but by this invisible computational context it lands in. [^2]
 
+![The mixture of experts. Diverse requests (the batch) are routed to specific specialists - MoE imagined as a busy group of specialists in a room.](/assets/images/2025-11-08-LLM-randomness-part1/moe_victorian_committee.png)
+
 Let's revisit the weather examples from GPT-4.1 with temp=0. They are from different sub-parts of the bigger model, caused by different batch contexts, different expert activations, different numerical paths through the same network. Here's the practical implication: production LLM APIs handle thousands of requests per second. Your request arrives, gets bundled with whoever else is querying at that millisecond, and processed. You have no control over batch composition. The computational context is invisible to you but affecting the result.
 
 ### Reproducibility vs. Efficiency
