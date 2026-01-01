@@ -126,9 +126,10 @@ This worked. By correcting the model's assumption about how the world works, the
 
 ## A Better Mental Model: Floor Grating
 
-Andrej Karpathy coined the term "jagged intelligence" to describe a fundamental characteristic of LLMs: they can solve complex problems that impress us, while simultaneously failing at tasks that seem trivially simple. His visualization shows it well:
+Andrej Karpathy coined the term "jagged intelligence" to describe a fundamental characteristic of LLMs: they can solve complex problems that impress us, while simultaneously failing at tasks that seem trivially simple. A visualization he shared captures this well — and adds an important nuance: human intelligence is also jagged, just in a different shape.
 
-[PLACEHOLDER: Karpathy's jagged shape image — human abilities and LLM abilities as jagged line - they overlap quite a bit, but also many mismatches]
+![Jagged intelligence: human (blue) and AI (red) capabilities](/assets/images/2025_12_21-LLM-unpredictability-part2/jagged_intelligence_karpathy.png)
+*Human intelligence (blue) and AI intelligence (red). Both are jagged — but in different directions. (Source: [Karpathy's 2025 Year in Review](https://karpathy.bearblog.dev/year-in-review-2025/))*
 
 The classic example: an LLM can write sophisticated code, analyze legal documents, or explain quantum physics — but ask it to count the number of 'r's in "strawberry" and it fails. The capability landscape is jagged, not smooth. Unlike humans, where abilities tend to correlate and develop together from birth to adulthood, LLM capabilities are scattered — peaks of surprising competence next to valleys of surprising failure.
 
@@ -140,7 +141,7 @@ Let me offer a different mental model: floor grating. Imagine an industrial floo
 
 Now imagine a small dog trying to cross the same surface. Its paws are shaped differently. They slip through the gaps. What felt like solid ground to you is an obstacle course for the dog.
 
-[VISUAL: Floor grating — human foot walks fine, small dog paw falls through]
+![Floor grating: human foot walks fine, small dog paw falls through](/assets/images/2025_12_21-LLM-unpredictability-part2/foot_and_paw_over_floor_grating.png)
 
 The biomedical fixation case is a perfect example. Search re-ranking felt like "covered ground" — we'd tested it extensively, deployed it across many customers, watched it perform well for months. It looked solid.
 
@@ -223,15 +224,17 @@ This is, after all, how we've solved software problems for decades. Something go
 
 In Part 1, I compared traditional software to a Kugelbahn — a marble run. The ball rolls down the track, following a deterministic path. If it flies off at some point, you find the bent rail, straighten it, and the ball runs true again. Clear cause, clear location, clear fix.
 
+![Kugelbahn vs Sheepdogs: two models of software](/assets/images/2025_12_21-LLM-unpredictability-part2/kugelbahn_vs_sheepdogs.png)
+
 LLM-based software doesn't work this way. Everything is technically visible. You can inspect every weight in the neural network, every activation value, every attention pattern. It's all just numbers — billions of them, fully accessible. Nothing is hidden. But nothing is meaningful at human scale.
 
 There's no "line 347 where the model decided this must be a biomedical university." No neuron labeled "assume downstream systems are intelligent." No attention head you can adjust to make it stop worrying about ski shop weather conditions. The computation that leads to "add a caveat about ski shop hours" is distributed across millions of parameters, emerging from patterns learned across billions of training examples. You can't point to it. You can't isolate it. You can't patch it.
 
 In Part 1, I also introduced the sheepdog analogy. LLM-based systems are like coordinated sheepdogs — far more capable than marble runs. They can go uphill. They can make decisions. They can handle situations they've never seen before. They have something like judgment.
 
-But when a sheepdog suddenly chases a bird instead of herding sheep, you can't fix it the way you'd fix a bent rail. There's no single broken part. The dog made a judgment call based on its training, its instincts, and the specific situation. To prevent it happening again, you don't repair a mechanism — you adjust the conditions, the training, the constraints.
+But when a sheepdog suddenly chases a squirrel instead of herding sheep, you can't fix it the way you'd fix a bent rail. There's no single broken part. The dog made a judgment call based on its training, its instincts, and the specific situation. To prevent it happening again, you don't repair a mechanism — you adjust the conditions, the training, the constraints.
 
-[VISUAL: Two modes of failure. Very similar to part 1 picture, but kugelbahn on the left is broken on one rail, ball is flying away. On the right, one of the sheep dog is running away chasing a squirrel.]
+![Two modes of failure: broken Kugelbahn vs distracted sheepdog](/assets/images/2025_12_21-LLM-unpredictability-part2/two_failure_modes.png)
 
 This is the mental shift required for working with LLMs. We can't trace and patch. We can't find the bug and fix it. Instead, we have to:
 
