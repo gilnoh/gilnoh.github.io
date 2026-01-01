@@ -93,7 +93,7 @@ But Yes: In practice, production LLM systems can't run deterministically, even w
 ### ... and the Bigger Source of Unpredictability
 However, there is more to visit on "LLMs seem to be unpredictable". The bigger contribution comes from something else: **you cannot easily reason about how two different but seemingly similar inputs will behave**. This is what frustrates users and engineers in production. This is more than sampling variance, or MoE routing. This is emergent behavior from a complex system encountering edge cases in its learned generalizations. The model is trying to solve an inherently underspecified problem -- real-world inputs are always ambiguous in subtle ways -- and it does so by generalizing from the data it has observed before (training data). Sometimes that generalization is robust. Sometimes it's brittle. And predicting which is which? That's the hard part.
 
-Understanding this bigger source of unpredictability -- how LLMs generalize, where they fail, and what we can do about it -- is the goal of the next article (Part 2).
+Understanding this bigger source of unpredictability -- how LLMs generalize, where they fail, and what we can do about it -- is the goal of the next article: [Part 2](https://gilnoh.github.io/2025/12/21/LLM-unpredictability-part2.html).
 
 ---
 
