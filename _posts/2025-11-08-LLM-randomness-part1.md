@@ -80,7 +80,7 @@ Nothing about my prompt and parameter changed, but the results are different. So
 In production, "one inference" is not a single frozen computation. It's a pipeline of moving parts, and small differences in that pipeline can alter the logits before decoding even starts. Common sources include:
 
 - **Sparse routing (if the model uses MoE):** capacity limits or overflow handling can reroute tokens based on batch load.
-- **Dynamic/continuous batching:** your request is grouped with others; batch shape changes, kernel choices change, and floating-point operation order changes.
+- **Dynamic/continuous batching:** your request is grouped with others; batch shape changes, kernel choices change, and floating-point operation order changes. Under heavier load, batch size/shape and overflow handling shift more aggressively, which can increase variance.
 - **Non-deterministic GPU kernels:** fused ops, atomics, and reduction order can differ run-to-run.
 - **Replica/hardware differences:** load balancing across replicas, hardware generations, or quantization variants.
 - **Provider-side updates:** inference kernels, decoding heuristics, or safety layers can be updated without a visible model change.
