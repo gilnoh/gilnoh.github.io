@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Why LLMs Behave Unpredictably: Generalization and the Invisible Fill-in 
+title: "Why LLMs Behave Unpredictably: Generalization and the Invisible Fill-in"
 date: 2025-12-21
 ---
 
