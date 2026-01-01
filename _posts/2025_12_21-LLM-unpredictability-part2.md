@@ -1,12 +1,12 @@
 ---
 layout: post
-title: When LLM behaves unpredictable - Generalization and the invisible fill-in. 
+title: Why LLMs Behave Unpredictably: Generalization and the Invisible Fill-in 
 date: 2025-12-21
 ---
 
 ## Introduction - Why Does LLM-Based Software Feel Unpredictable?
 
-In [Part 1](https://gilnoh.github.io/2025/11/08/LLM-randomness-part1.html), we visited the question: "Is there something fundamentally random about LLMs?" The answer was Jein — yes and no. Technically, everything is deterministic: neural networks are just math running on normal hardware. But in practice, production LLM systems introduce variance through sampling, batch effects, and sparse architectures like Mixture of Experts. Even with temperature=0, the same input can produce different outputs depending on what other requests share your batch. Production systems accept this since the quality is usually not affected, and the efficiency gain is significant.
+In [Part 1](https://gilnoh.github.io/2025/11/08/LLM-randomness-part1.html), we visited the question: "Is there something fundamentally random about LLMs?" The answer was yes and no — or as Germans say, *Jein*. Technically, everything is deterministic: neural networks are just math running on normal hardware. But in practice, production LLM systems introduce variance through sampling, batch effects, and sparse architectures like Mixture of Experts. Even with temperature=0, the same input can produce different outputs depending on what other requests share your batch. Production systems accept this since the quality is usually not affected, and the efficiency gain is significant.
 
 That investigation was a useful foundation to understand how LLMs work and utilize randomness. However, we still have not answered the bigger question: "Why does LLM-based software feel unpredictable?" When someone complains that their LLM-based system is "unpredictable," they're rarely talking about slight word choice variations from batch effects. They're talking about something more unsettling: "It worked perfectly 99 times, then completely failed on the 100th." Or: "I asked the same question twice and got fundamentally different answers — one helpful, one useless." What is causing this? If it's not the non-deterministic calculations, then what is the reason?
 
@@ -64,8 +64,6 @@ That's quite some amount of specification for what seemed like a trivial task! A
 
 GPT-4.1 filled them in "generate a sentence that is likely to be observed here and now", and then filled in "now" as best as it believes.[^1]
 
-[^1]: GPT4.1 has vague concept of "now" as Spring, if current time is unspecified - mainly because GPT4.1 training cutoff date is May/June 2024.
-
 The human asking and the LLM answering must be in sync on all these implicit dimensions. But we rarely are — and neither party sees the mismatch until the output appears.
 
 So how does the LLM handle this underspecification? It generalizes. The model fills in missing information using its own understanding of the world. "Continue the sentence" becomes "write something appropriate for here and now." Spring feels right. Evocative language feels natural. The model isn't wrong — it's doing exactly what it was trained to do: produce helpful, contextually appropriate responses.
@@ -76,15 +74,15 @@ But here's the problem: the fill-in is **invisible**. You don't see the model de
 
 Moreover, the non-determinism in production LLMs we visited in part 1 can also affect which generalization "wins", so even the same prompt can trigger different invisible fill-ins. On the above example, most of them calls decided "full sentence format", but one of them selected "just the new words". We don't see this fill-in process, hence "invisible". We only see the different outputs and wonder why.
 
-This is what researchers mean when they talk about the shift from traditional to AI programming. Omar Khattab (footnote: a researcher from Stanford who delivered DSPy and ColBERT, link to his X posting) put this well in a X posting: "The change is that it's inherently underspecified, fuzzy, and relies entirely on generalization — which is opaque and extensive... and that means that you cannot easily reason about how two different 'similar' inputs would behave."
+This is what researchers mean when they talk about the shift from traditional to AI programming. Omar Khattab put this well in a post on X[^2]: "The change is that it's inherently underspecified, fuzzy, and relies entirely on generalization — which is opaque and extensive... and that means that you cannot easily reason about how two different 'similar' inputs would behave."
 
 The challenge isn't randomness. It's that we cannot see what the model is filling in — until it fills in something we didn't expect.
 
 
-## GENERALIZATION IN PRODUCTION — REAL CASES
+## Generalization Failures in Production
 
 The minimal example above is interesting in the sense that it shows clearly what the LLM is "filling-in" and the process of generalization.
-But that example is harmless -- who cares if the weather sentence mentions spring or has a bad format? 
+But that example is harmless -- who cares if the weather sentence mentions spring or has a bad format?
 In production systems, the same mechanism causes real problems. I'd like to share some memorable cases, since we started shipping of LLM-based software back in 2023. Each illustrates a different flavor of generalization failure.
 For each one: what happened, why it happened, and what fixed it.
 
@@ -105,8 +103,7 @@ And then it correctly answered the wrong question.
 **What fixed it?**
 One option was to inject context: "This is a full university with many departments, not a specialized biomedical institution." That works for this case — but it doesn't scale. A generic re-ranking module can't anticipate what false inferences might arise from every possible candidate distribution. Next deployment might trigger "this is a travel agency" or "this is an IT company." 
 The real fix was simpler: use a model with better generalization. Say, GPT-4.1 and later models, even with minimal 'nano' size model, didn't make this unjustified inference. They understood that the distribution of topics in search results doesn't define the nature of the query.
-It seems obvious in hindsight — you shouldn't assume the context of a query based on the contents of search results. But smaller and earlier models failed on this for quite some time. The capability gap was invisible until we stepped on it.[^2]
-[^2]: The reranking task was actually a harsh one for models, especially the task did not allowed any thinking tokens. To optimize cost and process speed (e.g. < .5 second), LLM output was limited to a few tokens, direct list of index numbers only. LLMs didn't have much token space to reason through the problem — they had to make quick judgments. This did amplified the tendency to over-infer from surface patterns.
+It seems obvious in hindsight — you shouldn't assume the context of a query based on the contents of search results. But smaller and earlier models failed on this for quite some time. The capability gap was invisible until we stepped on it.[^3]
 
 ### Case 2: The Invented Commands
 One of our LLM-based customer service system used special command strings to create interactive elements. When the knowledge base entry provided to LLM contains something like {COMMAND USE FORM 1234}, the LLM is supposed to copy this string exactly into its response. A downstream parser then detects the pattern and renders it as a clickable button, interactive content, or web form, and so on.
@@ -127,7 +124,7 @@ We tried explicit prohibition: "Don't make up commands! Copy them exactly as wri
 This worked. By correcting the model's assumption about how the world works, the behavior changed. The lesson: don't just forbid the behavior — explain the world correctly. Negative instructions fail when the model still has a wrong belief about why the forbidden behavior would be okay. Correct the belief, and the behavior follows.
 
 
-### The Floor Grating Analogy
+## A Better Mental Model: Floor Grating
 
 Andrej Karpathy coined the term "jagged intelligence" to describe a fundamental characteristic of LLMs: they can solve complex problems that impress us, while simultaneously failing at tasks that seem trivially simple. His visualization shows it well:
 
@@ -151,12 +148,16 @@ Then we brought a problem with the wrong shape: a general query against a candid
 
 And here's the key difference from "jagged intelligence": we were still in the capability area. The model could do search re-ranking. It wasn't a case of asking it to count letters or do something outside its competence. It was a subtle gap within a capability it demonstrably had.
 
-Better models have tighter grating — fewer gaps, smaller holes. For example, latest models handle search result reranking just fine, even on those edge cases previous models often falled. It now feels really solid. But maybe it is just tighter than before. Occasionally, a problem with an unusual shape still catches on a gap — one stumble among many smooth steps.
+Better models have tighter grating — fewer gaps, smaller holes. For example, latest models handle search result reranking just fine, even on those edge cases previous models often failed. It now feels really solid. But maybe it is just tighter than before. Occasionally, a problem with an unusual shape still catches on a gap — one stumble among many smooth steps.
 
-This is why some LLM toolkits recommend practitioners to "always assume there will be edge cases when you go productive". I fully agree -- the grating analogy is my preferred way of explaining this. The software (LLM and the configured system as whole) now looks solid -- the grating seems to be tight enough -- but please aware this is still grating, maybe some will still get stuck. 
+This is why some LLM toolkits recommend practitioners to "always assume there will be edge cases when you go productive". I fully agree -- the grating analogy is my preferred way of explaining this. The software (LLM and the configured system as whole) now looks solid -- the grating seems to be tight enough -- but please be aware this is still grating, maybe some will still get stuck. 
 
 The unsettling implication: you don't know where the gaps are until you step on them. Your test suite might have problems shaped like human feet. Production traffic brings dogs, cats, high heels, and shapes you've never seen.
 
+
+## More Patterns — and Where Part 1 Meets Part 2
+
+With the floor grating model in mind, let's look at two more cases. These show subtler failure modes — and reveal how the technical non-determinism from Part 1 interacts with generalization.
 
 ### Case 3: "... I think it is dangerous to trust ski shop opening times"
 
@@ -170,8 +171,7 @@ Nothing in the knowledge base suggested this. No instruction told it to add cave
 We guess that the model had learned something from its training data: ski shops are weather-dependent businesses. Snow conditions affect operations. Hours might be unreliable. So it somehow assumed: "The opening hours for this type of business may not be trustworthy. It is better to be safe, isn't it?" This was not a case of missing information. The model had the correct hours. It just didn't trust them — because its training prior about ski shops overrode our instruction to report the knowledge base content faithfully.
 
 **What fixed it?**
-One way that worked was adding a meta-confirmation: "The opening hours listed are accurate. The shop operates consistently throughout the season regardless of weather conditions." [^3]
-[^3]: Thankfully, this was *actually* true for this customer whose shops were located over 2000m ski-area, opening all the time throughout the season. Not all ski shops were this lucky, such as German ones in the 2025/2026 season, closed longer than usual due to lack of snow...
+One way that worked was adding a meta-confirmation: "The opening hours listed are accurate. The shop operates consistently throughout the season regardless of weather conditions." [^4]
 
 This explicitly told the model: don't apply your general beliefs about ski shops. The caveat disappeared.
 
@@ -183,54 +183,36 @@ To fix it, we had to explicitly tell it what not to add. Not because it disobeye
 
 ### Case 4: Emergent Geography — Sometimes
 
-Modern LLMs are surprisingly good at geographic reasoning. They know where cities are, understand that Berlin is in Germany and Reading is in England, and can even estimate which of two locations is closer to a third. This isn't explicitly programmed — it emerges from training on text that mentions places, distances, and spatial relationships.
-We first noticed this capability appearing around the GPT-4 era. One of our test cases simulated a customer asking a retail chatbot: "Which of your stores is closer to me? I live in Charlottenburg."
-The knowledge base contained two Berlin store locations: one in Spandau, one in Mitte. For quite some time through 2023, GPT-4 would deflect:
+Modern LLMs are surprisingly good at geographic reasoning. They know where cities are and can estimate which of two locations is closer to a third. This isn't explicitly programmed — it emerges from training on text that mentions places, distances, and spatial relationships.
+
+We first noticed this around the GPT-4 era. A test case asked a retail chatbot: "Which of your stores is closer to me? I live in Charlottenburg." The knowledge base had two Berlin stores: Spandau and Mitte. GPT-4 would deflect:
 
 > "We have two stores in Berlin. One is located in Spandau at Breite Straße xx, and the other in Mitte at Hackescher Markt yy. Both are accessible by public transport..."
 
-Accurate, helpful, but not answering the question directly. Then GPT-4-Turbo arrived, and suddenly:
+Then GPT-4-Turbo arrived, and suddenly:
 
 > "The store in Mitte at Hackescher Markt is closer to Charlottenburg than the store in Spandau."
 
-The model now knew enough about Berlin's internal geography to answer confidently. Nice! An emergent capability appearing with model improvements. But this new ability came with its own grating pattern.
+An emergent capability. But it came with its own grating pattern: the model sometimes gave confident answers and sometimes fell back to safe responses, even for the same location. We suspected MoE architecture — different expert combinations having different levels of geographic confidence.
 
-For well-known locations — major cities, famous neighborhoods — the model was confident and usually correct. For obscure locations, it would fall back to the safe 'use our store locator'. Fair enough.
+This became a real issue when we deployed for a car company in the UK. A customer asks: "Where is my nearest dealer? I live in Reading."
 
-The strange part: the model sometimes gave confident answers and sometimes fell back, even when we supplied the same address / location on the query. We suspected this was the MoE architecture at work — different expert combinations having different levels of geographic confidence. Some "expert committees" knew Berlin well; others weren't so sure.
+Sometimes: "Your nearest dealer is [Name] in [Location], approximately [X] miles from Reading..."
 
-This became a real issue when we deployed for a car company in the UK. Their bot had access to a list of all dealership locations — addresses, services, contact details. A customer asks: "Where is my nearest dealer? I live in Reading."
+Other times, same question: "You can find your nearest dealer using our dealer search page: [link]"
 
-> "Your nearest dealer is [Name] in [Location], approximately [X] miles from Reading. Here's their contact information..."
-
-The customer was impressed. The bot understood geography, cross-referenced the data, gave a specific helpful answer. This wasn't even a feature we had built — it just emerged from the LLM's capabilities. But other times, same question, same context:
-
-> "You can find your nearest dealer using our dealer search page: [link]"
-
-The customer was confused. "It just told my colleague the exact answer yesterday. Why is it giving me a generic response?" And sometimes — this was the frustrating part — the same person asking the same question minutes apart would get different responses. Specific answer, then fallback. Or fallback, then specific answer. [^4]
-[^4]: Note that, this is not an easy task even for LLMs. LLM geographic knowledge degrades as you zoom in. We can test this directly by asking LLMs for latitude/longitude estimates. Models like GPT are fairly accurate at the city level, less accurate at the neighborhood level, and quite unreliable at street level. For example: "Heidelberg" -> accurate. "Heidelberg Ziegelhausen" -> still okay, "Oberer Rainweg" (a street) -> shaky. "Oberer Rainweg 104" -> unreliable. This matters because dealership data is stored as full street addresses. The model has to reason about "123 King Street, Reading" versus "45 Crown Road, Slough" and determine which is closer. That's a much harder problem than comparing city names, and the model's confidence reflects this uncertainty.
+The same person asking minutes apart would get different responses.[^5]
 
 **What was happening?**
 
-This is where Part 1 meets Part 2.
-The model's process: retrieve dealership data → assess confidence about the location → choose response path. If confident enough → specific answer. If uncertain → safe fallback. 
+This is where Part 1 meets Part 2. The model assesses confidence about location, then chooses a response path. But "confident enough" isn't a fixed threshold. Part 1's technical variance — batch effects, MoE routing — shifts the model's internal state on each run. The same query can land on different sides of the confidence threshold.
 
-But "confident enough" isn't a fixed threshold. Part 1's technical variance — batch effects, MoE routing, the invisible computational context — shifts the model's internal state slightly on each run. The same query can land on different sides of the confidence threshold depending on factors completely invisible to us.
+The floor grating is vibrating. The same foot can catch in a gap one moment and walk smoothly the next.
 
-The floor grating is vibrating. The same problem, the same foot, can catch in a gap one moment and walk smoothly the next.
-
-**What did the customer want?**
-
-"Please make this consistent! Please always give the specific answer."
-
-But we couldn't — not without building an external tool. The geographic reasoning was emergent, not engineered. We had no dial to turn. The options were: build a proper dealer-search integration (development time, cost), or accept the inconsistency.
-
-The customer was disappointed. They'd seen the capability work. They knew it was possible. But "possible sometimes" wasn't good enough.
+The customer wanted consistency, but we couldn't provide it — the geographic reasoning was emergent, not engineered. We had no dial to turn. The options were: build a proper dealer-search integration (development cost), or accept the inconsistency.
 
 **The lesson:**
-Emergent capabilities come with emergent inconsistencies. When an LLM develops an ability you didn't explicitly build — geographic reasoning, common-sense inference, implicit calculation — that ability doesn't come with reliability guarantees.
-Neither response was wrong. The specific answer was helpful. The fallback was safe. But the inconsistency itself was the problem. Users don't mind limitations — they mind unpredictability.
-This case also shows how Part 1 and Part 2 interact. The technical non-determinism (Part 1) doesn't just cause stylistic variation — it can push the model across decision thresholds, causing qualitatively different outputs. The same input produces different answers not because the model is "random," but because invisible factors affect which generalization path it takes.
+Emergent capabilities come with emergent inconsistencies. When an LLM develops an ability you didn't explicitly build, that ability doesn't come with reliability guarantees. Users don't mind limitations — they mind unpredictability. And as this case shows, Part 1's technical non-determinism can push the model across decision thresholds, causing qualitatively different outputs from identical inputs.
 
 
 ## WHY CAN'T WE DEBUG THIS?
@@ -268,9 +250,8 @@ But we can work with it. We can reduce unwanted fill-ins, catch failures before 
 The most direct approach: add explicit context to prevent wrong inferences.
 We saw this in the cases above. "This is a full university, not a biomedical institution." "The downstream parser has no intelligence — copy strings exactly." "The opening hours are accurate regardless of weather conditions."
 
-This works, and it's often the first thing to try. But it has limits.
-It's reactive — you discover a failure mode, then patch it. It's fragile — prompts tuned for one model may behave differently on another, since each model has different grating patterns. And it doesn't scale well across many deployments in different domains.
-Manual prompt engineering is necessary, but usually not sufficient on its own.
+This works, and it's often the first thing to try — but it's reactive. You discover a failure mode, then patch it. It's also fragile: prompts tuned for one model may behave differently on another, since each model has different grating patterns. And it doesn't scale well across many deployments in different domains.
+Manual prompt engineering is the starting point, not the destination.
 
 ### Automated Instruction Optimization
 What if we treated prompt engineering like machine learning? Instead of hand-crafting instructions, we optimize them systematically against a dataset of examples.
@@ -332,17 +313,20 @@ This is where we are with LLMs.
 
 The problem isn't that the model is stupid. The problem isn't that users write bad prompts. It's a genuine gap between two different world-models — what you assume, and what the model assumes. Neither side sees the gap clearly until something goes wrong.
 
-For users, the practical shift is: provide context like you're working with a smart colleague who doesn't share your background. When the output surprises you, ask: "What did I assume it would know?" The answer often points directly to what was missing.
-
-For developers and providers, the work is: bridge this gap proactively. Extract implicit knowledge into explicit context. Build systems that expose what the model is uncertain about. Where possible, use approaches — like agentic workflows and externalized reasoning — that make the fill-ins visible and communicatable.
+For users, the practical shift is: provide context like you're working with a smart colleague who doesn't share your background. For developers and providers: bridge this gap proactively — extract implicit knowledge into explicit context, build systems that expose uncertainty, and where possible, use agentic workflows that make the fill-ins visible and correctable.
 
 ---
 
-So, this is the end of a two-part series.
+This concludes a two-part series. In [Part 1](https://gilnoh.github.io/2025/11/08/LLM-randomness-part1.html), we asked whether LLMs have fundamental randomness — the answer was Jein. Technical non-determinism exists, but it's manageable and rarely the real source of frustration. Here in Part 2, we explored the bigger culprit: generalization, and the invisible fill-ins that happen every time an LLM receives a prompt.
 
-In Part 1, we asked: "Is there something fundamentally random about LLMs?" The answer was Jein — technical non-determinism exists (sampling, batch effects, MoE routing), but it's manageable and usually not the real source of frustration.
+The next time an LLM does something unexpected, before asking "Why is it so dumb?" — try asking: "What did I assume it would know?"
 
-In Part 2, we explored the bigger source of unpredictability: generalization. LLMs fill in underspecified information using their own understanding of the world. When their fill-in matches your expectation, the system works. When it doesn't, the system feels random, unreliable, unpredictable.
+It's a better question. And increasingly, the AI is learning to ask it too.
 
-So, the next time an LLM does something unexpected, before asking "Why is it so dumb?" — try asking: "What did I assume it would know?" (Usually, the answer is: too much.)
-It's a better question. And soon enough, the AI might be asking the same - about us.
+---
+
+[^1]: GPT4.1 has vague concept of "now" as Spring, if current time is unspecified - mainly because GPT4.1 training cutoff date is May/June 2024.
+[^2]: Omar Khattab is the creator of DSPy and ColBERT. https://x.com/lateinteraction/status/1992012647449972919
+[^3]: The reranking task was actually a harsh one for models, especially the task did not allowed any thinking tokens. To optimize cost and process speed (e.g. < .5 second), LLM output was limited to a few tokens, direct list of index numbers only. LLMs didn't have much token space to reason through the problem — they had to make quick judgments. This did amplified the tendency to over-infer from surface patterns.
+[^4]: Thankfully, this was *actually* true for this customer whose shops were located over 2000m ski-area, opening all the time throughout the season. Not all ski shops were this lucky, such as German ones in the 2025/2026 season, closed longer than usual due to lack of snow...
+[^5]: LLM geographic knowledge degrades as you zoom in. Models are fairly accurate at the city level, less accurate at the neighborhood level, and unreliable at street level. For example: "Heidelberg" → accurate. "Heidelberg Ziegelhausen" → okay. "Oberer Rainweg" (a street) → shaky. Since dealership data is stored as street addresses, the model must reason about which of two addresses is closer — a much harder problem than comparing cities.
