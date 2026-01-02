@@ -20,7 +20,7 @@ And in Part 2, I will visit bigger and broader issues around LLMs: that you cann
 ### Randomness and Neural Networks
 Neural networks, including LLMs, run on "normal" computer hardware: they might run on exotic pieces such as GPUs, TPUs, NPUs or whatever chips are marketed for running NNs quickly. But all those systems are still normal computational hardware, and the math itself is deterministic: given the same inputs and the same numerical path, you get the same outputs. There is no inherent magic or dice-rolling inside the model. 
 
-Actually, computers are really bad at providing anything random on their own. I vividly remember a picture that shocked me back in my college days. The chapter started with a drawing of a Geiger counter connected to a computer, and introduced this as "the only way to get real randomness" -- a common teaching point at the time. This easily shocked me and made me shoot back "hey, then what are these rand() call results?". The textbook naturally knew we would ask this question, and kindly introduced the good old reliable way of "pseudo randomness". Just as we've done since the 19th century, we just read from a book of pre-filled numbers. We get a seed (e.g. a page number), visit that page (open this big book), and read the number aloud. Same seed, always the same output. The lesson was: most software randomness is pseudo-random, and true randomness requires a physical source. [^1] 
+Actually, computers are really bad at providing anything random on their own. I vividly remember a picture that shocked me back in my college days. The chapter started with a drawing of a Geiger counter connected to a computer, and introduced this as "the only way to get real randomness" -- a common teaching point at the time. This easily shocked me and made me shoot back "hey, then what are these rand() call results?". The textbook naturally knew we would ask this question, and kindly introduced the good old reliable way of "pseudo randomness". Just as we've done since the 19th century, we just read from a book of pre-filled numbers. We get a seed (e.g. a page number), visit that page (open this big book), and read the number aloud. Same seed, always the same output. The lesson was: most software randomness is pseudo-random, and true randomness requires a physical source. 
 
 ![the only true way of producing random real numbers](/assets/images/2025-11-08-LLM-randomness-part1/the_only_way_to_get_true_randomness.png)
 
@@ -94,14 +94,14 @@ Early LLMs were **dense**: every token activates the entire model. **Mixture of 
 
 Think of it like this: imagine a committee of specialists answering your question, but they're simultaneously answering 50 other questions from different people. Your question arrives in batch #4791 alongside recipes, tax law, and Python debugging. A certain subset of specialists handles that batch. Run the exact same question again? It might land in batch #4792 with astronomy and medical queries. Different specialists can activate. The output you get is shaped not just by your prompt, but by the invisible computational context it lands in.
 
-Many current top-tier models publicly use MoE (e.g., Mixtral, DeepSeek, some Qwen/Grok/GPT-OSS variants, and Llama-4 MoE variants). There's no public proof about GPT-4's architecture, but it's widely believed to be MoE as well. For our topic, MoE matters because routing decisions can depend on batch load (which experts are "full"), so the execution path can shift even when your prompt doesn't.
+![Illustration: one possible serving-stack routing scenario (MoE imagined as a Victorian era experts in a busy room).](/assets/images/2025-11-08-LLM-randomness-part1/moe_victorian_committee.png)
 
-### Other serving-stack factors (briefly)
+Many current frontier models publicly use MoE (e.g., Mixtral, DeepSeek, Qwen/Grok/GPT-OSS variants, and so on). There's no public proof about GPT architectures, but it's widely believed to be MoE as well. For our topic, MoE matters because routing decisions can depend on batch load (which experts are "full"), so the execution path (which expert is answering) can shift even when your prompt doesn't.
+
+### Other serving-stack factors
 Even if you don't care about batching or MoE, there are still small production factors that can nudge results: load balancing across replicas, hardware/quantization differences, and provider-side updates to inference code or safety layers.
 
-None of this is visible from the API, but each can slightly change the internal computation, and that can lead to different outputs even with temp=0. [^2]
-
-![Illustration: one possible serving-stack routing scenario (MoE-style committee).](/assets/images/2025-11-08-LLM-randomness-part1/moe_victorian_committee.png)
+None of this is visible from the API, but each can slightly change the internal computation, and that can lead to different outputs even with temp=0.
 
 Let's revisit the GPT-4.1 weather examples at temp=0. The variations are not necessarily "random" -- they are the result of different execution contexts: different batch shapes, possibly different routing, or other invisible serving details. Here's the practical implication: production LLM APIs handle thousands of requests per second. Your request arrives, gets bundled with whoever else is querying at that millisecond, and processed. You have no control over this computational context, but it can still affect the result.
 
@@ -123,8 +123,3 @@ But Yes: In practice, production LLM systems often can't run deterministically, 
 However, there is more to the feeling that "LLMs seem unpredictable." The bigger contribution comes from something else: **we cannot easily predict how two different but similar inputs will behave**. This is what frustrates users and engineers in production. This is more than sampling variance or serving-stack variance. This is emergent behavior from a complex system encountering edge cases in its learned generalizations. The model is trying to solve an inherently underspecified problem -- real-world inputs are always ambiguous in subtle ways -- and it does so by generalizing from the data it has observed before (training data). Sometimes that generalization is robust. Sometimes it's brittle. And predicting which is which? That's the hard part.
 
 Understanding this bigger source of unpredictability -- how LLMs generalize, where they fail, and what we can do about it -- is the goal of the next article: [Part 2](https://gilnoh.github.io/2025/12/21/LLM-unpredictability-part2.html).
-
----
-
-[^1]: Classical computing only, e.g. non-quantum computing.
-[^2]: Not all LLMs use sparse architectures, but serving effects exist in both sparse and dense models. Batch shape and kernel choices can change the order of floating-point operations, and routing/capacity logic (when present) can change which submodules execute. These differences are usually tiny, but can shift token choices when the model's internal preferences are close.
