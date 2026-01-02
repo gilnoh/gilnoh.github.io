@@ -40,9 +40,7 @@ Here's the thing: when I wrote this prompt, I was vaguely expecting traditional 
 
 To get what I actually intended -- traditional language-model-style completion -- I would have needed to write something like:
 
-```
-Act as a pure language model performing next-word prediction with no contextual assumptions. We have no context at all -- no 'now,' no 'where,' no assumed situation. Complete the following sentence fragment into one full sentence, including the given words. Keep it neutral on topics, behave as if you have sampled out of all possible sentences that start with the given sentence parts. Sentence: "The weather was..."
-```
+```Act as a pure language model performing next-word prediction with no contextual assumptions. We have no context at all - no 'now,' no 'where,' no assumed situation. Complete the following sentence fragment into one full sentence, including the given words. Keep it neutral on topics, behave as if you have sampled out of all possible sentences that start with the given sentence parts. Sentence: "The weather was..."```
 
 That's quite some amount of specification for what seemed like a trivial task! And this reveals something fundamental: it is (always) underspecified. "Continue the sentence" seems simple. But it contains hidden assumptions that must be filled in:
 
@@ -264,10 +262,13 @@ Consider the ski shop case in an agentic context:
 User: "When are you open?"
 Agent thinking:
 - Found opening hours: 9am-6pm daily
-- This is a ski shop. Weather might affect operations. Maybe not safe to trust this? Should I caveat?
-- Potentially helpful tools: ski area webcams, real-time weather, weather forecast
-- Decision: ask user rather than assume
-Agent response to user: "We're open 9am to 6pm daily. Do you want to check if the current slope conditions are normal?"
+- This is a ski shop. Weather might affect operations.
+  Maybe not safe to trust this? Should I caveat?
+- Potentially helpful tools: ski area webcams,real-time weather,
+  weather forecast.
+- Decision: ask user rather than assume.
+Agent response to user: "We're open 9am to 6pm daily.
+  Do you want to check if the current slope conditions are normal?"
 ```
 
 The same reasoning process that caused the unsolicited caveat is now visible. The user can correct it: "No, just give me the hours." Or confirm: "Yes, please check conditions." The invisible fill-in is more exposed and becomes a decision point.
