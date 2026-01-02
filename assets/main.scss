@@ -1,0 +1,11 @@
+---
+---
+
+@import "minima";
+
+// Custom styles for code blocks - enable word wrapping instead of horizontal scroll
+pre, pre code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
