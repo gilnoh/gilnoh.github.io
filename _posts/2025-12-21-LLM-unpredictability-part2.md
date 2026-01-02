@@ -292,7 +292,7 @@ It's a better question. And increasingly, the AI is learning to ask it too.
 ---
 ---
 
-[^1]: It seems different models have different default "what is the current season" priors when temporal information is missing. In my tests, GPT-4.1 leaned "spring" (and flipped to "autumn" when the location was Sydney), while GPT-5.2 leaned "winter" (and flipped to "summer" with Sydney). This suggests model-specific, cutoff-anchored temporal priors.
+[^1]: It seems different models have different default "what is the current season" priors when temporal information is missing. In my tests, GPT-4.1 leaned "spring" (and flipped to "autumn" when the location was Sydney), while GPT-5.2 leaned "winter" ("summer" with Sydney). This suggests model-specific, cutoff-anchored temporal priors.
 [^2]: Omar Khattab is the creator of DSPy and ColBERT. [https://x.com/lateinteraction/status/1992012647449972919](https://x.com/lateinteraction/status/1992012647449972919)
 [^3]: The reranking task was actually a harsh one for models, especially the task did not allow any thinking tokens. To optimize cost and process speed (e.g. < .5 second), LLM output was limited to a few tokens, direct list of index numbers only. LLMs didn't have much token space to reason through the problem -- they had to make quick judgments. This amplified the tendency to over-infer from surface patterns.
 [^4]: Thankfully, this was *actually* true for this customer whose shops were located over 2000m ski area, opening all the time throughout the season. Not all ski shops were this lucky, such as German ones in the 2025/2026 season, closed longer than usual due to lack of snow...
