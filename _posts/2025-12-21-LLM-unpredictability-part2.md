@@ -40,7 +40,9 @@ Here's the thing: when I wrote this prompt, I was vaguely expecting traditional 
 
 To get what I actually intended -- traditional language-model-style completion -- I would have needed to write something like:
 
-> Act as a pure language model performing next-word prediction with no contextual assumptions. We have no context at all -- no 'now,' no 'where,' no assumed situation. Complete the following sentence fragment into one full sentence, including the given words. Keep it neutral on topics, behave as if you have sampled out of all possible sentences that start with the given sentence parts. Sentence: The weather was..."
+```
+Act as a pure language model performing next-word prediction with no contextual assumptions. We have no context at all -- no 'now,' no 'where,' no assumed situation. Complete the following sentence fragment into one full sentence, including the given words. Keep it neutral on topics, behave as if you have sampled out of all possible sentences that start with the given sentence parts. Sentence: "The weather was..."
+```
 
 That's quite some amount of specification for what seemed like a trivial task! And this reveals something fundamental: it is (always) underspecified. "Continue the sentence" seems simple. But it contains hidden assumptions that must be filled in:
 
