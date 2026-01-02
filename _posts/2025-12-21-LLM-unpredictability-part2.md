@@ -283,13 +283,13 @@ This is where we are with LLMs. The problem isn't that the model is stupid. The 
 
 For users, the practical shift is: provide context like you're working with a smart colleague who doesn't share your background. For developers and providers: bridge this gap proactively -- extract implicit knowledge into explicit context, build systems that expose uncertainty, and where possible, use agentic workflows that make the fill-ins visible and correctable.
 
----
-
-This concludes a two-part series. In [Part 1](https://gilnoh.github.io/2025/11/08/LLM-randomness-part1.html), we asked whether LLMs have fundamental randomness -- the answer was Jein. Technical non-determinism exists, but it's manageable and rarely the real source of frustration. Here in Part 2, we explored the bigger culprit: generalization, and the invisible fill-ins that happen every time an LLM receives a prompt.
+### This concludes a two-part series.
+In [Part 1](https://gilnoh.github.io/2025/11/08/LLM-randomness-part1.html), we asked whether LLMs have fundamental randomness -- the answer was Jein. Technical non-determinism exists, but it's manageable and rarely the real source of frustration. Here in Part 2, we explored the bigger culprit: generalization, and the invisible fill-ins that happen every time an LLM receives a prompt.
 
 The next time an LLM does something unexpected, before asking "Why is it so dumb?" -- try asking: "What did I assume it would know?"
 It's a better question. And increasingly, the AI is learning to ask it too.
 
+---
 ---
 
 [^1]: It seems different models have different default "what is the current season" priors when temporal information is missing. In my tests, GPT-4.1 leaned "spring" (and flipped to "autumn" when the location was Sydney), while GPT-5.2 leaned "winter" (and flipped to "summer" with Sydney). This suggests model-specific, cutoff-anchored temporal priors.
