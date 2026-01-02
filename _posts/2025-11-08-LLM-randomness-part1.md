@@ -50,11 +50,11 @@ Another common parameter is "temperature". Think of temperature as controlling h
 
 When the temperature is set to 0, sampling effectively disappears: the model always picks the single highest-probability token. This is sometimes called "greedy decoding". At exactly 0, there's technically no randomness left - it's purely deterministic selection. Parameters like temperature and top-p give us some dials -- from "creative and varied" (high temperature, high top-p) to "predictable and consistent" (low temperature, low top-p). 
 
-But here's the surprise: even with temperature=0, production LLM models often don't give reproducible results. Here are some actual call results from GPT-4.1 with temp=0.0.
+But here's the surprise: even with temperature=0, production LLM models often don't give reproducible results. Here are some actual call results from GPT-4.1 at temp=0.0.
 
 Input: ```Continue the sentence. The sentence: The weather was...```
 
-When I run this test on a (unlucky?) day, I've got six different variations:
+On one (unlucky?) day, I got six different variations:
 ```
 The weather was unexpectedly warm for this time of year, with a gentle breeze carrying the scent of blooming flowers
 The weather was unexpectedly warm for early spring, with golden sunlight streaming through the clouds and a gentle breeze carrying the scent of blooming flowers.
@@ -68,45 +68,59 @@ So what's going on here? Why does temp=0 still give us different outputs?
 
 
 ### The Hidden Culprit: The Serving Stack
-When I first observed this, my instinct was to blame the model architecture. But repeated tests made something clearer: temperature=0 variability depends on the serving stack, and it can change over time even when the model version stays the same.
-
-Just a few days after the above 6 variation samples, I tried the same setup (same prompt, same endpoint) but it then produced only two variations:
+A few days later, I ran the same setup (same prompt, temperature=0, same endpoint) and got only two variations:
 ```
 The weather was unusually warm for early spring, with a gentle breeze carrying the scent of blooming flowers through the air.
 The weather was unusually warm for early spring, with a gentle breeze carrying the scent of blooming flowers through the open windows.
 ```
 
-Nothing about my prompt and parameter changed, but the results are different. So what's going on?
-In production, "one inference" is not a single frozen computation. It's a pipeline of moving parts, and small differences in that pipeline can alter the logits before decoding even starts. Common sources include:
+Nothing about my prompt or parameters changed, but the results are different. The likely culprit is the serving stack.
 
-- **Sparse routing (if the model uses MoE):** capacity limits or overflow handling can reroute tokens based on batch load.
-- **Dynamic/continuous batching:** your request is grouped with others; batch shape changes, kernel choices change, and floating-point operation order changes. Under heavier load, batch size/shape and overflow handling shift more aggressively, which can increase variance.
-- **Non-deterministic GPU kernels:** fused ops, atomics, and reduction order can differ run-to-run.
-- **Replica/hardware differences:** load balancing across replicas, hardware generations, or quantization variants.
-- **Provider-side updates:** inference kernels, decoding heuristics, or safety layers can be updated without a visible model change.
+In production, one inference isn't a single frozen computation. It's a pipeline of moving parts, and small differences in that pipeline can alter the logits before decoding even starts. Two serving-side ideas matter most for understanding this: batching and Mixture of Experts (MoE).
 
-None of this is visible from the API. But each can slightly change the internal computation, and that can lead to different outputs even with temp=0. [^2]
+### Batching (why servers group requests)
+Neural-network hardware (typically GPUs) is fastest when it runs one big job instead of many tiny ones. That's why production systems batch multiple requests together: it keeps the GPU busy, reduces overhead per request, and makes inference cheaper and faster overall. If you processed requests strictly one-by-one, the GPU would sit idle between tiny jobs and throughput would collapse.
+
+There are a few batching styles:
+
+- **Fixed batching:** a fixed batch size is chosen ahead of time. This is common in offline evaluation or when traffic is steady.
+- **Dynamic batching:** the server waits a few milliseconds to gather multiple requests, then runs them together up to some limit. The batch size changes depending on traffic.
+- **Continuous batching:** during decoding (token-by-token), the server keeps adding new requests into the running batch as others finish. This squeezes the most throughput out of the GPU, but the batch composition can change at each step.
+
+For our topic, the key point is simple: in production, your request is almost never alone. It's grouped with others, and that grouping can vary from run to run under different load. Different batch shapes can also nudge low-level execution paths, which can introduce tiny numeric drift.
+
+### Mixture of Experts (MoE): a different way to scale models
+Early LLMs were **dense**: every token activates the entire model. **Mixture of Experts (MoE)** takes a different approach: the model has multiple specialist subnetworks ("experts"), and a router chooses a few experts to handle each token. So each token only uses a fraction of the total parameters. The benefit is scale: you can grow total model capacity and specialization without scaling per-token compute by the same amount.
+
+Think of it like this: imagine a committee of specialists answering your question, but they're simultaneously answering 50 other questions from different people. Your question arrives in batch #4791 alongside recipes, tax law, and Python debugging. A certain subset of specialists handles that batch. Run the exact same question again? It might land in batch #4792 with astronomy and medical queries. Different specialists can activate. The output you get is shaped not just by your prompt, but by the invisible computational context it lands in.
+
+Many current top-tier models publicly use MoE (e.g., Mixtral, DeepSeek, some Qwen/Grok/GPT-OSS variants, and Llama-4 MoE variants). There's no public proof about GPT-4's architecture, but it's widely believed to be MoE as well. For our topic, MoE matters because routing decisions can depend on batch load (which experts are "full"), so the execution path can shift even when your prompt doesn't.
+
+### Other serving-stack factors (briefly)
+Even if you don't care about batching or MoE, there are still small production factors that can nudge results: load balancing across replicas, hardware/quantization differences, and provider-side updates to inference code or safety layers.
+
+None of this is visible from the API, but each can slightly change the internal computation, and that can lead to different outputs even with temp=0. [^2]
 
 ![Illustration: one possible serving-stack routing scenario (MoE-style committee).](/assets/images/2025-11-08-LLM-randomness-part1/moe_victorian_committee.png)
 
-Let's revisit the weather examples from GPT-4.1 with temp=0. The variations are not necessarily "random" -- they are the result of different execution contexts: different batch shapes, possibly different routing, or other invisible serving details. Here's the practical implication: production LLM APIs handle thousands of requests per second. Your request arrives, gets bundled with whoever else is querying at that millisecond, and processed. You have no control over this computational context, but it can still affect the result.
+Let's revisit the GPT-4.1 weather examples at temp=0. The variations are not necessarily "random" -- they are the result of different execution contexts: different batch shapes, possibly different routing, or other invisible serving details. Here's the practical implication: production LLM APIs handle thousands of requests per second. Your request arrives, gets bundled with whoever else is querying at that millisecond, and processed. You have no control over this computational context, but it can still affect the result.
 
 ### Reproducibility vs. Efficiency
 Now, you might be thinking: "Can't we just fix this?" And actually, yes — some providers now offer "reproducible" or "deterministic" modes, often with a "seed" parameter. In controlled settings like evaluation benchmarks, this works beautifully: same seed, same input, same output. Perfect for running the same evaluation suite multiple times and getting consistent scores.
 
 But here's the catch: truly reproducible modes often require fixed batch sizes (sometimes batch=1, processing one request at a time) or dedicated compute instances. This can reduce throughput by 10-100x depending on the system. Suddenly your API calls are slower and/or cost significantly more. So in practice, production systems run with dynamic or continuous batching: faster, cheaper, and accepting non-determinism at the single-inference level.
 
-This is why we can see non-deterministic LLM outputs from production endpoints. Some deployments are stable for certain prompts; others vary; and behavior can shift over time as serving stacks evolve, or loading factors changes. Unless you run a local instance with single-batch processing, or pay premium costs for dedicated compute, this is simply how production LLMs often work. The computational context your request lands in shapes the output you receive, and you have no control over it. This is the reality we live in.
+This is why we can see non-deterministic LLM outputs from production endpoints. Some deployments are stable for certain prompts; others vary; and behavior can shift over time as serving stacks evolve, or loading factors change. Unless you run a local instance with single-batch processing, or pay premium costs for dedicated compute, this is simply how production LLMs often work. The computational context your request lands in shapes the output you receive, and you have no control over it. This is the reality we live in.
 
 ### Conclusion
 So let's return to our original question: "Does an LLM have fundamental randomness in it?" The answer, as I said at the beginning, is "No, but also Yes."
 
 No: There's nothing inherently more random in LLMs than in other programs. Everything is deterministic in principle. Sampling uses pseudo-randomness (our old friend, the book of random numbers). Serving-stack effects are just computational artifacts—different paths through the same deterministic system.
 
-But Yes: In practice, production LLM systems often can't run deterministically, even with identical inputs and temp=0. The serving stack introduces variance you can't control: batch shapes and kernel paths, routing, replica/hardware differences, and other hidden execution details. Methods exist to reduce this (fixed batches, seed parameters, dedicated instances), but we generally live with inference-level non-determinism in production because the alternative is too expensive and too slow.
+But Yes: In practice, production LLM systems often can't run deterministically, even with identical inputs and temp=0. The serving stack introduces variance you can't control: batch shapes and execution paths, routing, replica/hardware differences, and other hidden execution details. Methods exist to reduce this (fixed batches, seed parameters, dedicated instances), but we generally live with inference-level non-determinism in production because the alternative is too expensive and too slow.
 
 ### ... and the Bigger Source of Unpredictability
-However, there is more to visit on "LLMs seem to be unpredictable". The bigger contribution comes from something else: **we cannot easily predict how two different but similar inputs will behave**. This is what frustrates users and engineers in production. This is more than sampling variance or serving-stack variance. This is emergent behavior from a complex system encountering edge cases in its learned generalizations. The model is trying to solve an inherently underspecified problem -- real-world inputs are always ambiguous in subtle ways -- and it does so by generalizing from the data it has observed before (training data). Sometimes that generalization is robust. Sometimes it's brittle. And predicting which is which? That's the hard part.
+However, there is more to the feeling that "LLMs seem unpredictable." The bigger contribution comes from something else: **we cannot easily predict how two different but similar inputs will behave**. This is what frustrates users and engineers in production. This is more than sampling variance or serving-stack variance. This is emergent behavior from a complex system encountering edge cases in its learned generalizations. The model is trying to solve an inherently underspecified problem -- real-world inputs are always ambiguous in subtle ways -- and it does so by generalizing from the data it has observed before (training data). Sometimes that generalization is robust. Sometimes it's brittle. And predicting which is which? That's the hard part.
 
 Understanding this bigger source of unpredictability -- how LLMs generalize, where they fail, and what we can do about it -- is the goal of the next article: [Part 2](https://gilnoh.github.io/2025/12/21/LLM-unpredictability-part2.html).
 
