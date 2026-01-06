@@ -57,7 +57,7 @@ This is the core capability that makes LLMs useful. Without generalization, ever
 
 But here's the problem: the fill-in is **invisible**. You don't see the model decide "it must be springtime" or "I should write the full sentence." You only see the output. When it matches your expectations, the system feels magical -- it just understood. When it doesn't match, the system feels random and unpredictable. Moreover, the non-determinism in production LLMs we visited in Part 1 can also affect which generalization "wins", so even the same prompt can trigger different invisible fill-ins. In the example above, most of the calls decided "full sentence format", but one of them selected "just the new words". We don't see this fill-in process, hence "invisible". We only see the different outputs and wonder why.
 
-This is what researchers mean when they talk about the shift from traditional to AI programming. Omar Khattab put this well in a post on X[^2]:
+This is what researchers mean when they talk about the shift from traditional to AI programming. Omar Khattab[^2] put this well in [a post on X](https://x.com/lateinteraction/status/1992012647449972919):
 > The change is that it's inherently underspecified, fuzzy, and relies entirely on generalization -- which is opaque and extensive... 
 > ... and that means that you cannot easily reason about how two different 'similar' inputs would behave.
 
@@ -297,7 +297,7 @@ It's a better question. And increasingly, the AI is learning to ask it too.
 ---
 
 [^1]: It seems that models have different default "what is the current season" priors when temporal information is missing. In my tests, GPT-4.1 leaned "spring" (and flipped to "autumn" when the location was given as Sydney), while GPT-5.2 leaned "winter" ("summer" with Sydney). This suggests model-specific, cutoff-anchored temporal priors.
-[^2]: Omar Khattab is the creator of DSPy and ColBERT. His X post: [https://x.com/lateinteraction/status/1992012647449972919](https://x.com/lateinteraction/status/1992012647449972919)
+[^2]: Omar Khattab is the creator of DSPy and ColBERT.
 [^3]: The reranking task was actually a harsh one for models, especially the task did not allow any thinking tokens. To optimize cost and process speed (e.g. < .5 second), LLM output was limited to a few tokens, direct list of index numbers only. LLMs didn't have much token space to reason through the problem -- they had to make quick judgments. This amplified the tendency to over-infer from surface patterns.
 [^4]: Thankfully, this was *actually* true for this customer whose shops were located over 2000m ski area, opening all the time throughout the season. Not all ski shops were this lucky, such as German ones in the 2025/2026 season, closed longer than usual due to lack of snow...
 [^5]: LLM geographic knowledge degrades as you zoom in. Models are fairly accurate at the city level, less accurate at the neighborhood level, and unreliable at street level. For example: "Heidelberg" -> accurate. "Heidelberg Ziegelhausen" -> okay. "Oberer Rainweg" (a street) -> shaky. Since dealership data is stored as street addresses, the model must reason about which of two addresses is closer -- a much harder problem than comparing cities.
