@@ -90,16 +90,16 @@ There are a few batching styles:
 For our topic, the key point is simple: in production, your request is almost never alone. It's grouped with others, and that grouping can vary from run to run under different load. Different batch shapes can also nudge low-level execution paths, which can introduce tiny numeric drift.
 
 ### Mixture of Experts (MoE): a different way to scale models
-Early LLMs were **dense**: every token activates the entire model. **Mixture of Experts (MoE)** takes a different approach: the model has multiple specialist subnetworks ("experts"), and a router chooses a few experts to handle each token. So each token only uses a fraction of the total parameters. The benefit is scale: you can grow total model capacity and specialization without scaling per-token compute by the same amount.
+Early LLMs were dense, which means every token activates the entire model. **Mixture of Experts (MoE)** takes a different approach: the model has multiple specialist subnetworks ("experts"), and a router chooses a few experts to handle each token. So each token only uses a fraction of the total parameters. The benefit is scale: you can grow total model capacity and specialization without scaling per-token compute by the same amount.
+
+Many current frontier models publicly use MoE (e.g., Mixtral, DeepSeek, Qwen/Grok/GPT-OSS, and so on). There's no public proof about GPT architectures, but it's widely believed to be MoE as well. For our topic, MoE matters because routing decisions can depend on batch load (which experts are "full"), so the execution path (which expert is answering) can shift even when your prompt doesn't.
 
 Think of it like this: imagine a committee of specialists answering your question, but they're simultaneously answering 50 other questions from different people. Your question arrives in batch #4791 alongside recipes, tax law, and Python debugging. A certain subset of specialists handles that batch. Run the exact same question again? It might land in batch #4792 with astronomy and medical queries. Different specialists can activate. The output you get is shaped not just by your prompt, but by the invisible computational context it lands in.
 
 ![Illustration: one possible serving-stack routing scenario (MoE imagined as a Victorian era experts in a busy room).](/assets/images/2025-11-08-LLM-randomness-part1/moe_victorian_committee.png)
 
-Many current frontier models publicly use MoE (e.g., Mixtral, DeepSeek, Qwen/Grok/GPT-OSS variants, and so on). There's no public proof about GPT architectures, but it's widely believed to be MoE as well. For our topic, MoE matters because routing decisions can depend on batch load (which experts are "full"), so the execution path (which expert is answering) can shift even when your prompt doesn't.
-
 ### Other serving-stack factors
-Even if you don't care about batching or MoE, there are still small production factors that can nudge results: load balancing across replicas, hardware/quantization differences, and provider-side updates to inference code or safety layers.
+Even if we exclude batching or MoE, there are still small production factors that can nudge results: load balancing across replicas, hardware/quantization differences, and provider-side updates to inference code or safety layers.
 
 None of this is visible from the API, but each can slightly change the internal computation, and that can lead to different outputs even with temp=0.
 
